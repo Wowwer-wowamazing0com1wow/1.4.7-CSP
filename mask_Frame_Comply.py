@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt # single use of plt is commented out
 import os.path  
 import PIL.ImageDraw            
 
-def round_corners_one_image(original_image, percent_of_side=.3):
+def round_corners_one_image(original_image, waterMark, percent_of_side=0):
     """ Rounds the corner of a PIL.Image
     
     original_image must be a PIL.Image
@@ -33,11 +33,12 @@ def round_corners_one_image(original_image, percent_of_side=.3):
 
                          
     # Uncomment the following line to show the mask
-    plt.imshow(rounded_mask)
+    #plt.imshow(rounded_mask)
     
     # Make the new image, starting with all transparent
-    result = PIL.Image.new('RGBA', original_image.size, (0,0,0,0))
+    result = PIL.Image.new('RGBA', original_image.size, (100,0,0,100))
     result.paste(original_image, (0,0), mask=rounded_mask)
+    result.paste(waterMark, (0,0))
     return result
     
 def get_images(directory=None):
@@ -65,6 +66,16 @@ def get_images(directory=None):
         except IOError:
             pass # do nothing with errors tying to open non-images
     return image_list, file_list
+    
+def Get_waterMark(directory=None):
+    if directory == None:
+        directory = os.getcwd()
+    directory_list = os.listdir(directory)
+    for entry in directory_list:
+        if entry == "CIRCLE PROJECT WaterMark.png":
+            absolute_filename = os.path.join(directory, entry)
+            image = PIL.Image.open(absolute_filename)
+            return image
 
 def round_corners_of_all_images(directory=None):
     """ Saves a modfied version of each image in directory.
@@ -86,6 +97,7 @@ def round_corners_of_all_images(directory=None):
     
     # Load all the images
     image_list, file_list = get_images(directory)  
+    waterMark = Get_waterMark()
 
     # Go through the images and save modified versions
     for n in range(len(image_list)):
@@ -95,7 +107,7 @@ def round_corners_of_all_images(directory=None):
         
         # Round the corners with default percent of radius
         curr_image = image_list[n]
-        new_image = round_corners_one_image(curr_image) 
+        new_image = round_corners_one_image(curr_image, waterMark) 
         
         # Save the altered image, suing PNG to retain transparency
         new_image_filename = os.path.join(new_directory, filename + '.png')
