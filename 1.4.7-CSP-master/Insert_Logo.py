@@ -3,7 +3,14 @@ import matplotlib.pyplot as plt # single use of plt is commented out
 import os.path  
 import PIL.ImageDraw            
 
-def insert_logo(original_image, logo, percent_of_side=0):
+# must 'cd' to the directory with images, and directory with images must have a folder 'logos/logos.png', to test, cd to .../1.4.7-CSP-master/Sample Imgs
+# options:
+#  change the border in line 109
+#  change logo color to white by inserting 'black' parameter to insert_logo_all_images
+
+# to run: call insert_logo_all_images()
+
+def insert_logo(original_image, logo,bordercolor,percent_of_side=0.1):
     """ Rounds the corner of a PIL.Image
     
     original_image must be a PIL.Image
@@ -20,8 +27,8 @@ def insert_logo(original_image, logo, percent_of_side=0):
     ###
     
     #start with transparent mask
-    rounded_mask = PIL.Image.new('RGBA', (width, height), (255,0,0,0))
-    drawing_layer = PIL.ImageDraw.Draw(rounded_mask)
+    frame_mask = PIL.Image.new('RGBA', (width, height), (255,0,0,0))
+    drawing_layer = PIL.ImageDraw.Draw(frame_mask)
 
     # Overwrite the RGBA values with A=255.
     # The 127 for RGB values was used merely for visualizing the mask
@@ -34,31 +41,20 @@ def insert_logo(original_image, logo, percent_of_side=0):
                          
     # Uncomment the following line to show the mask
     #plt.imshow(rounded_mask)
-    
+
     
     # Make the new image, starting with all transparent
-    #result = PIL.Image.new('RGBA', original_image.size, (100,0,0,100))
-    '''logo = logo.convert('RGBA')
-    print(type(original_image.size))
+    result = PIL.Image.new('RGBA', original_image.size, bordercolor)
     
+    # insert frame
+    result.paste(original_image, (0,0), mask=frame_mask)
     
-    result = PIL.Image.new('RGBA', original_image.size)
-    print(type(result))
-    result = PIL.Image.alpha_composite(result, original_image)
-    print(type(result))
-    result = PIL.Image.alpha_composite(result, logo)'''
-    
-    #result = PIL.Image.alpha_composite(original_image, logo)
-    #result.paste(original_image, (0,0), mask=rounded_mask)
-    #result.paste(logo, (0,0), mask=original_image)
-    #plt.imshow(result)
-    
+    # insert logo
     original_image = original_image.convert('RGBA')
     logo = logo.convert('RGBA')
+    result.paste(logo, (0, 0), logo.convert('RGBA'))
     
-    original_image.paste(logo, (0, 0), logo.convert('RGBA'))
-    
-    return original_image
+    return result
     
 def get_images(directory=None):
     """ Returns PIL.Image objects for all the images in directory.
@@ -86,7 +82,7 @@ def get_images(directory=None):
             pass # do nothing with errors tying to open non-images
     return image_list, file_list
     
-def get_logo(directory=None, type='black'):
+def get_logo(type='white', directory=None):
     if directory == None:
         directory = os.getcwd()
 
@@ -107,8 +103,10 @@ def get_logo(directory=None, type='black'):
 
     image = image.resize((300,60))
     return image
+    
+    
 
-def insert_logo_all_images(directory=None):
+def insert_logo_all_images(bordercolor=(100,0,0,255),directory=None, type='white'):
     """ Saves a modfied version of each image in directory.
     
     Uses current directory if no directory is specified. 
@@ -128,7 +126,9 @@ def insert_logo_all_images(directory=None):
     
     # Load all the images
     image_list, file_list = get_images(directory)  
-    logo = get_logo()
+    
+    
+    logo = get_logo(type)
 
     # Go through the images and save modified versions
     for n in range(len(image_list)):
@@ -138,7 +138,7 @@ def insert_logo_all_images(directory=None):
         
         # insert logo in image
         curr_image = image_list[n]
-        new_image = insert_logo(curr_image, logo) 
+        new_image = insert_logo(curr_image, logo, bordercolor) 
         
         # Save the altered image, suing PNG to retain transparency
         new_image_filename = os.path.join(new_directory, filename + '.png')
